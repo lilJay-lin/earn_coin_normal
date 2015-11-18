@@ -29,12 +29,12 @@ var data ={
     signmark: 0,//是否签到标识，0未签到，1已签到
     pitmark: 0,//矿井标识 0未从未挖过 1不可领取 2可以领取
     digseconds: 0,//	挖掘的时间 秒
-    bigtime: 15, //每N分钟计算一次
+    bigtime: 1, //每N分钟计算一次
     digmaxtime:4, //最多累计N小时
     digbytecoin: 0.25 //每bigtime分钟收集N个流量币
   },
   bytecoin_spend:{//花流量币
-    coinnum: 11,//用户流量币数
+    coinnum: 11.0,//用户流量币数
     activity_start_time: '20151118172021',
     activity_end_time: '20151118212021',
     spends:[
@@ -113,26 +113,28 @@ router.post('/bytecoin_signin', function(req, res, next) {
 router.post('/bytecoin_pit', function(req, res, next) {
   var resData = {retcode: 0};
   //是否可领取
-  var retcode = (data.bytecoin.digseconds / 60) >= data.bytecoin.bigtime;
+  var addCoin = Math.floor(data.bytecoin.digseconds / 60 / data.bytecoin.bigtime)  * data.bytecoin.digbytecoin;
 
   if(data.bytecoin.pitmark == 0){
     data.bytecoin.digseconds = 0;
+    data.bytecoin.pitmark = 1;
     setCounter();
     resData.retcode = 1;
-  }else if(retcode){
+  }else if(addCoin > 0){
     resData.retcode = 1;
-    var duration = data.bytecoin.digseconds / 60;
+/*    var duration = data.bytecoin.digseconds / 60;
     if( (duration / 60) > data.bytecoin.digmaxtime){
         duration = data.bytecoin.digmaxtime * 60;
-    }
-    var addCoin = (duration / data.bytecoin.bigtime) * data.bytecoin.digbytecoin;
+    }*/
     data.bytecoin.coinnum += addCoin;
     data.bytecoin.digseconds = 0;
+    data.bytecoin.pitmark = 1; //不可领取
+    //setCounter();
   }else{
     resData.retcode = 2;
   }
 
-  data.bytecoin.signmark = 1;
+  //data.bytecoin.signmark = 1;
   res.json(resData);
 });
 
@@ -147,7 +149,16 @@ function setCounter(){
 }
 
 function increment(){
-  data.bytecoin.digseconds ++;
+  data.bytecoin.digseconds ++;  //是否可领取
+  var addCoin = Math.floor(data.bytecoin.digseconds / 60 / data.bytecoin.bigtime)  * data.bytecoin.digbytecoin;
+  addCoin > 0 && (data.bytecoin.pitmark = 2);
+  console.log(JSON.stringify({
+    pitmark: data.bytecoin.pitmark ,
+    digseconds: data.bytecoin.digseconds,
+    gatherCoin: addCoin,
+    coinsum: data.bytecoin.coinnum
+  }));
+  counter = null;
   counter = setTimeout(function(){
     increment();
   }, 1000);

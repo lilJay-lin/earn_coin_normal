@@ -31,7 +31,7 @@ var SignIn = View.extends({
         e.preventDefault();
         var cb = function(res){
             //console.log(res);
-            //更新签到界面
+            //更新赚流量界面
             if(res.retcode === 1){
                 event.trigger(globalEvent.bytecoin.render);//触发赚流量更新
             }

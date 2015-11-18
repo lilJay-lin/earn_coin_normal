@@ -12,7 +12,7 @@ var User = View.extends({
     model:{
         logo: '',
         name: '',
-        coinnum: 0
+        coinnum: 0.0
     },
     type: {
         render: globalEvent.user.render
