@@ -1,0 +1,33 @@
+<div class="gather">
+    <div class="gather-bar">
+        <p class="gather-progress" style="width: 20%">
+        </p>
+        <div class="gather-time">
+            {{digseconds}}
+            <span class="gather-time-union">0</span>
+            <span class="gather-time-union">0</span>
+            <span>:</span>
+            <span class="gather-time-union">0</span>
+            <span class="gather-time-union">3</span>
+            <span>:</span>
+            <span class="gather-time-union">1</span>
+            <span class="gather-time-union">1</span>
+        </div>
+    </div>
+    <div class="gather-game">
+        i am gather game
+    </div>
+    <div class="gather-btn-wrapper">
+        <p>
+            已采集<span>{{total_gather_coin}}</span>枚流量币
+        </p>
+        <div>
+            {{^pitmark}}<a class="gather-btn">开始采集</a>{{/pitmark}}
+            {{#pitmark}}
+                    {{#pit_fn}}
+                        <a class="gather-btn {{pit_class}}">领取</a>
+                    {{/pit_fn}}
+            {{/pitmark}}
+        </div>
+    </div>
+</div>
