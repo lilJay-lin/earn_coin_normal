@@ -7,9 +7,9 @@
 
 目前暂定为1.0.0版本，先使用一些自己熟悉的开发工具
 
-1. 1.使用JetBrains webstorm作为开发工具
-2. 2.使用gulp + webpack作为打包流程工具
-3. 3.使用nodejs作为开始使用的本地服务端，提供接口数据测试
+1. 使用JetBrains webstorm作为开发工具
+2. 使用gulp + webpack作为打包流程工具
+3. 使用nodejs作为开始使用的本地服务端，提供接口数据测试
 
 
 ## Vesion 1.0.0 开发方式
