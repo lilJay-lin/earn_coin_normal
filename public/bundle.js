@@ -44,23 +44,33 @@
 /* 0 */
 /***/ function(module, exports, __webpack_require__) {
 
-	/**
+	/* WEBPACK VAR INJECTION */(function($) {/**
 	 * Created by linxiaojie on 2015/11/17.
 	 */
-	var event = __webpack_require__(1);
+	var event = __webpack_require__(2);
 	var request = __webpack_require__(3);
+	var tabs = __webpack_require__(4);
 	
 	/*
 	    view
 	 */
 	
-	var User = __webpack_require__(4),
-	    SignIn = __webpack_require__(12),
-	    Gather = __webpack_require__(14),
-	    globalEvent = __webpack_require__(11);
+	var User = __webpack_require__(5),
+	    SignIn = __webpack_require__(13),
+	    Gather = __webpack_require__(15),
+	    globalEvent = __webpack_require__(12),
+	    Tabs = __webpack_require__(4),
+	    Spend = __webpack_require__(17);
 	
-	var user = signIn = gather = null;
+	var user = signIn = gather = spend = null ;
 	
+	//初始化tabs选项卡
+	$(function(){
+	    var tabs =  new Tabs(".tabs");
+	    event.on(globalEvent.tabs.switch, function(e, idx){
+	        tabs.goto(idx);
+	    });
+	});
 	
 	/*
 	    @res {object}数据集
@@ -104,6 +114,7 @@
 	    }
 	};
 	//首次加载
+	//赚流量
 	request.get(request.bytecoin.get).done(function(res){
 	    refresh(res, true);
 	}).done(function(){
@@ -114,37 +125,16 @@
 	        });
 	    });
 	});
+	
+	
+	//花流量
+	spend = new Spend({
+	    el: '#spend'
+	});
+	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(1)))
 
 /***/ },
 /* 1 */
-/***/ function(module, exports, __webpack_require__) {
-
-	/* WEBPACK VAR INJECTION */(function($) {/**
-	 * Created by linxiaojie on 2015/11/17.
-	 */
-	var o = $({}),
-	    slice = [].slice;
-	var event = {
-	    on: function(){
-	        o.on.apply(o, slice.call(arguments));
-	    },
-	    off: function(){
-	        o.off.apply(o, slice.call(arguments));
-	    },
-	    trigger: function(){
-	        o.trigger.apply(o, slice.call(arguments));
-	    },
-	    one: function() {
-	        o.one.apply(o, slice.call(arguments));
-	    }
-	};
-	
-	
-	module.exports = event;
-	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(2)))
-
-/***/ },
-/* 2 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;/*!
@@ -10501,6 +10491,34 @@
 
 
 /***/ },
+/* 2 */
+/***/ function(module, exports, __webpack_require__) {
+
+	/* WEBPACK VAR INJECTION */(function($) {/**
+	 * Created by linxiaojie on 2015/11/17.
+	 */
+	var o = $({}),
+	    slice = [].slice;
+	var event = {
+	    on: function(){
+	        o.on.apply(o, slice.call(arguments));
+	    },
+	    off: function(){
+	        o.off.apply(o, slice.call(arguments));
+	    },
+	    trigger: function(){
+	        o.trigger.apply(o, slice.call(arguments));
+	    },
+	    one: function() {
+	        o.one.apply(o, slice.call(arguments));
+	    }
+	};
+	
+	
+	module.exports = event;
+	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(1)))
+
+/***/ },
 /* 3 */
 /***/ function(module, exports, __webpack_require__) {
 
@@ -10520,19 +10538,20 @@
 	        get: 'http://localhost:8080/bytecoin_get'
 	    },
 	    sign: {//签到组件请求数据
-	        signIn: 'http://localhost:8080/bytecoin_signin'
+	        signIn: 'http://localhost:8080/bytecoin_signin' //签到
 	    },
 	    gather: {//流量矿井请求数据
-	        bytecoin_pit: 'http://localhost:8080/bytecoin_pit'//
+	        bytecoin_pit: 'http://localhost:8080/bytecoin_pit' //开始采集 or 领取
 	    },
-	    cost:{//花流量模块请求数据
+	    spend:{//花流量模块请求数据
+	        bytecoin_spend: 'http://localhost:8080/bytecoin_spend',
 	        bytecoin_flow: 'http://localhost:8080/bytecoin_flow'
 	    },
 	    get: function(url,data){
 	        data = data == undefined ? null : data;
 	        return $.ajax({
 	            url: url,
-	            method: 'get',
+	            method: 'GET',
 	            dataType: 'json',
 	            cache: false,
 	            data: data
@@ -10542,7 +10561,7 @@
 	        data = data == undefined ? null : data;
 	        return $.ajax({
 	            url: url,
-	            method: 'post',
+	            method: 'POST',
 	            dataType: 'json',
 	            contentType: 'application/json',
 	            cache: false,
@@ -10550,27 +10569,173 @@
 	        });
 	    }
 	};
-	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(2)))
+	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(1)))
 
 /***/ },
 /* 4 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function($) {/**
+	 * Created by linxiaojie on 2015/10/19.
+	 */
+	
+	var Tabs = function(element, options){
+	    this.$el = $(element);
+	
+	    this.configMap = $.extend({}, this.configMap, options || {});
+	    this.init();
+	    this.addEvent();
+	};
+	
+	Tabs.staticMap = {
+	    tabs: '.tabs',
+	    activeClass: 'active',
+	    tabNav: '.tabs-nav',
+	    tabNavItem: '.tabs-nav > li',
+	    nav: '.tabs-nav a',
+	    tabPanel: '.tabs-panel'
+	};
+	
+	Tabs.prototype.configMap = {
+	    defaultActiveIndex: null
+	};
+	
+	Tabs.prototype.stateMap = {
+	    activeIndex: null,
+	    transitioning: null
+	};
+	
+	Tabs.prototype.$ = function(el){
+	    return this.$el.find(el);
+	}
+	Tabs.prototype.init = function(){
+	    var me = this,
+	        cfg = Tabs.staticMap,
+	        idx = me.configMap.defaultActiveIndex,
+	        activeIndex = idx ? idx : 0;
+	
+	    me.stateMap = {
+	        $tabNav: me.$(cfg.tabNav),
+	        $tabNavItem: me.$(cfg.tabNavItem),
+	        $nav: me.$(cfg.nav),
+	        $tabPanel: me.$(cfg.tabPanel)
+	    };
+	
+	    /*    var curNav = me.stateMap.$tabNav.find("." + cfg.activeClass);*/
+	
+	    //样式是否指定了active Class ://默认使用配置，无配置显示第一个
+	    /*    if(curNav.length > 0 ){
+	     index = me.stateMap.$tabNavItem.index(curNav.first());
+	     }*/
+	    var len = me.stateMap.$tabNavItem.length;
+	    activeIndex = activeIndex > len - 1 ? len - 1 : activeIndex;
+	
+	    me.goto(activeIndex);
+	};
+	
+	Tabs.prototype.addEvent = function(){
+	    var me = this,
+	        cfg = Tabs.staticMap;
+	    var stateMap = this.stateMap;
+	
+	    me.$el.on("click.tabs.zwui", cfg.nav, function(e){
+	        e.preventDefault();
+	        me.goto($(this))
+	    });
+	
+	};
+	
+	/*Tabs.prototype.open = function($nav){
+	 var me = this;
+	 if(!$nav
+	 || !$nav.length
+	 || me.transitioning
+	 || $nav.parent('li').hasClass(Tabs.staticMap.activeClass)){
+	 return ;
+	 }
+	
+	 var index = me.stateMap.nav.index($nav);
+	
+	 if(~index){
+	 me.goto(index);
+	 }
+	 };*/
+	
+	Tabs.prototype.goto = function ($nav){
+	
+	    var me = this,
+	        index = typeof $nav === 'number' ? $nav : me.stateMap.$nav.index($nav);
+	
+	    $nav = typeof $nav === 'number' ? me.stateMap.$nav.eq(index) : $($nav);
+	
+	    if(!$nav
+	        || !$nav.length
+	        || $nav.parent('li').hasClass(Tabs.staticMap.activeClass)){
+	        return ;
+	    }
+	    this.switchNav(index);
+	    this.switchPanel(index);
+	};
+	
+	Tabs.prototype.switchNav = function(index){
+	    var stMap = this.stateMap,
+	        cfg = Tabs.staticMap;
+	    stMap.$tabNavItem.removeClass(cfg.activeClass);
+	    stMap.$tabNavItem.eq(index).addClass(cfg.activeClass);
+	    stMap.activeIndex = index;
+	};
+	
+	Tabs.prototype.switchPanel = function(index){
+	    var stMap = this.stateMap,
+	        cfg = Tabs.staticMap;
+	    var $activeNav = stMap.$tabPanel.eq(index);
+	    stMap.$tabPanel.removeClass(cfg.activeClass);
+	    stMap.$tabPanel.eq(index).addClass(cfg.activeClass);
+	    stMap.activeIndex = index;
+	};
+	
+	Tabs.prototype.destroy = function(){
+	    this.$el.off(".tabs.zwui");
+	};
+	
+	var Plugin = function(){
+	    this.each(function(){
+	        var $this = $(this),
+	            el = Tabs.staticMap.tabs,
+	            options;
+	        var $tabs = $this.is(el) && $this || $this.closest(el);
+	
+	        options = UI.utils.parseOptions($tabs.data('tabs'));
+	
+	        var tabs = new Tabs($tabs[0], options);
+	
+	        return this;
+	
+	    });
+	}
+	
+	module.exports = Tabs;
+	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(1)))
+
+/***/ },
+/* 5 */
+/***/ function(module, exports, __webpack_require__) {
+
+	/* WEBPACK VAR INJECTION */(function($) {/**
 	 * Created by linxiaojie on 2015/11/17.
 	 */
 	
-	var event = __webpack_require__(1);
-	    View = __webpack_require__(5),
-	    _template = __webpack_require__(7),
-	    globalEvent = __webpack_require__(11);
+	var event = __webpack_require__(2);
+	    View = __webpack_require__(6),
+	    _template = __webpack_require__(8),
+	    globalEvent = __webpack_require__(12);
 	
 	var User = View.extends({
 	    template: _template,
 	    model:{
 	        logo: '',
 	        name: '',
-	        coinnum: 0
+	        coinnum: 0.0
 	    },
 	    type: {
 	        render: globalEvent.user.render
@@ -10597,10 +10762,10 @@
 	
 	module.exports = User;
 	
-	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(2)))
+	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(1)))
 
 /***/ },
-/* 5 */
+/* 6 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function($) {/**
@@ -10609,7 +10774,7 @@
 	
 	//var setOptions = ['configMap'];
 	
-	var _ = __webpack_require__(6);
+	var _ = __webpack_require__(7);
 	var View = function(options){
 	    var me = this;
 	    /*$.each(setOptions, function(option){
@@ -10617,6 +10782,7 @@
 	    });*/
 	    this.cid = _.uniqueId('c');
 	    this.el = options['el'];
+	    this.options = $.extend({}, this.options, options);
 	    this.model = $.extend({}, this.model, options.model || {});
 	    this._ensureElement();
 	    this.init.apply(this, arguments);
@@ -10672,8 +10838,12 @@
 	        return this;
 	    },
 	    remove: function(){
+	        this.undelegateEvents();
 	        this.$el && this.$el.remove();
 	        return this;
+	    },
+	    slice: function(cxt){
+	        return [].slice.call(cxt);
 	    },
 	    destroy: function(){}
 	});
@@ -10710,10 +10880,10 @@
 	});*/
 	
 	module.exports = View;
-	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(2)))
+	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(1)))
 
 /***/ },
-/* 6 */
+/* 7 */
 /***/ function(module, exports) {
 
 	/**
@@ -10733,14 +10903,14 @@
 	module.exports = _;
 
 /***/ },
-/* 7 */
+/* 8 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var H = __webpack_require__(8);
-	module.exports = function() { var T = new H.Template({code: function (c,p,i) { var t=this;t.b(i=i||"");t.b("<div class=\"user\"><div class=\"user-logo\"><img src=\"");t.b(t.v(t.f("logo",c,p,0)));t.b("\" alt=\"\"></div><div class=\"user-info\"><p class=\"user-name\">");t.b(t.v(t.f("name",c,p,0)));t.b("</p><p class=\"user-account\">");t.b(t.v(t.f("coinnum",c,p,0)));t.b("</p></div><div class=\"user-account-detail\"><a href=\"");t.b(t.v(t.f("detail",c,p,0)));t.b("\">明细</a></div></div>");return t.fl(); },partials: {}, subs: {  }}, "<div class=\"user\"><div class=\"user-logo\"><img src=\"{{logo}}\" alt=\"\"></div><div class=\"user-info\"><p class=\"user-name\">{{name}}</p><p class=\"user-account\">{{coinnum}}</p></div><div class=\"user-account-detail\"><a href=\"{{detail}}\">明细</a></div></div>", H);return T.render.apply(T, arguments); };
+	var H = __webpack_require__(9);
+	module.exports = function() { var T = new H.Template({code: function (c,p,i) { var t=this;t.b(i=i||"");t.b("<div class=\"user\"><div class=\"user-logo\"><img src=\"");t.b(t.v(t.f("logo",c,p,0)));t.b("\" alt=\"\"></div><div class=\"user-info\"><p class=\"user-name\">");t.b(t.v(t.f("name",c,p,0)));t.b("</p><p class=\"user-txt\">可使用流量币</p><p class=\"user-account\">");t.b(t.v(t.f("coinnum",c,p,0)));t.b("</p></div><a href=\"#\" class=\"user-detail-btn\">明细</a></div>");return t.fl(); },partials: {}, subs: {  }}, "<div class=\"user\"><div class=\"user-logo\"><img src=\"{{logo}}\" alt=\"\"></div><div class=\"user-info\"><p class=\"user-name\">{{name}}</p><p class=\"user-txt\">可使用流量币</p><p class=\"user-account\">{{coinnum}}</p></div><a href=\"#\" class=\"user-detail-btn\">明细</a></div>", H);return T.render.apply(T, arguments); };
 
 /***/ },
-/* 8 */
+/* 9 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/*
@@ -10760,14 +10930,14 @@
 	
 	// This file is for use with Node.js. See dist/ for browser files.
 	
-	var Hogan = __webpack_require__(9);
-	Hogan.Template = __webpack_require__(10).Template;
+	var Hogan = __webpack_require__(10);
+	Hogan.Template = __webpack_require__(11).Template;
 	Hogan.template = Hogan.Template;
 	module.exports = Hogan;
 
 
 /***/ },
-/* 9 */
+/* 10 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/*
@@ -11196,7 +11366,7 @@
 
 
 /***/ },
-/* 10 */
+/* 11 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/*
@@ -11543,7 +11713,7 @@
 
 
 /***/ },
-/* 11 */
+/* 12 */
 /***/ function(module, exports) {
 
 	/**
@@ -11567,11 +11737,17 @@
 	    },
 	    gather: {
 	        render: 'gather.render'
+	    },
+	    spend: {
+	        render: 'spend.render'
+	    },
+	    tabs: {
+	        switch: 'tabs.switch'
 	    }
 	};
 
 /***/ },
-/* 12 */
+/* 13 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function($) {/**
@@ -11579,11 +11755,11 @@
 	 */
 	
 	
-	var event = __webpack_require__(1);
-	View = __webpack_require__(5),
-	    _template = __webpack_require__(13),
+	var event = __webpack_require__(2);
+	View = __webpack_require__(6),
+	    _template = __webpack_require__(14),
 	    request = __webpack_require__(3),
-	    globalEvent = __webpack_require__(11);
+	    globalEvent = __webpack_require__(12);
 	
 	var SignIn = View.extends({
 	    template: _template,
@@ -11605,9 +11781,19 @@
 	     */
 	    sign: function(e){
 	        e.preventDefault();
+	        console.count('signin');
+	        if(this.model.signmark){
+	            return ;
+	        }
+	        if(!!this.sign_click && this.sign_click == 'lock'){
+	            return ;
+	        }
+	        this.sign_click = 'lock';
+	
 	        var cb = function(res){
+	            this.sign_click = 'unlock';
 	            //console.log(res);
-	            //更新签到界面
+	            //更新赚流量界面
 	            if(res.retcode === 1){
 	                event.trigger(globalEvent.bytecoin.render);//触发赚流量更新
 	            }
@@ -11636,34 +11822,35 @@
 	});
 	
 	module.exports = SignIn;
-	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(2)))
-
-/***/ },
-/* 13 */
-/***/ function(module, exports, __webpack_require__) {
-
-	var H = __webpack_require__(8);
-	module.exports = function() { var T = new H.Template({code: function (c,p,i) { var t=this;t.b(i=i||"");t.b("<div class=\"signin\"><div class=\"signin-info\">今日签到可领 <span class=\"signin-info-coin\">");if(!t.s(t.f("signmark",c,p,1),c,p,1,0,0,"")){t.b(t.v(t.f("signnum",c,p,0)));};t.b(" ");if(t.s(t.f("signmark",c,p,1),c,p,0,134,148,"{{ }}")){t.rs(c,p,function(c,p,t){t.b(t.v(t.f("tmrsignnum",c,p,0)));});c.pop();}t.b("</span> 个流量币</div><div>");if(!t.s(t.f("signmark",c,p,1),c,p,1,0,0,"")){t.b("<a href=\"javascript:;\" class=\"sigin-btn\">签到</a>");};t.b("</div></div><script></script>");return t.fl(); },partials: {}, subs: {  }}, "<div class=\"signin\"><div class=\"signin-info\">今日签到可领 <span class=\"signin-info-coin\">{{^signmark}}{{signnum}}{{/signmark}} {{#signmark}}{{tmrsignnum}}{{/signmark}}</span> 个流量币</div><div>{{^signmark}}<a href=\"javascript:;\" class=\"sigin-btn\">签到</a>{{/signmark}}</div></div><script></script>", H);return T.render.apply(T, arguments); };
+	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(1)))
 
 /***/ },
 /* 14 */
 /***/ function(module, exports, __webpack_require__) {
 
+	var H = __webpack_require__(9);
+	module.exports = function() { var T = new H.Template({code: function (c,p,i) { var t=this;t.b(i=i||"");t.b("<div class=\"signin\"><div class=\"signin-info\">");if(!t.s(t.f("signmark",c,p,1),c,p,1,0,0,"")){t.b("今日签到可领 <span class=\"signin-info-coin\">");t.b(t.v(t.f("signnum",c,p,0)));t.b("</span> 个流量币 ");};t.b(" ");if(t.s(t.f("signmark",c,p,1),c,p,0,147,213,"{{ }}")){t.rs(c,p,function(c,p,t){t.b(" 明日签到可领 <span class=\"signin-info-coin\">");t.b(t.v(t.f("tmrsignnum",c,p,0)));t.b("</span> 个流量币 ");});c.pop();}t.b("</div><div>");if(!t.s(t.f("signmark",c,p,1),c,p,1,0,0,"")){t.b("<a href=\"javascript:;\" class=\"sigin-btn\">签到</a>");};t.b(" ");if(t.s(t.f("signmark",c,p,1),c,p,0,324,380,"{{ }}")){t.rs(c,p,function(c,p,t){t.b("<a href=\"javascript:;\" class=\"sigin-btn disable\">已签到</a>");});c.pop();}t.b("</div></div>");return t.fl(); },partials: {}, subs: {  }}, "<div class=\"signin\"><div class=\"signin-info\">{{^signmark}}今日签到可领 <span class=\"signin-info-coin\">{{signnum}}</span> 个流量币 {{/signmark}} {{#signmark}} 明日签到可领 <span class=\"signin-info-coin\">{{tmrsignnum}}</span> 个流量币 {{/signmark}}</div><div>{{^signmark}}<a href=\"javascript:;\" class=\"sigin-btn\">签到</a>{{/signmark}} {{#signmark}}<a href=\"javascript:;\" class=\"sigin-btn disable\">已签到</a>{{/signmark}}</div></div>", H);return T.render.apply(T, arguments); };
+
+/***/ },
+/* 15 */
+/***/ function(module, exports, __webpack_require__) {
+
 	/* WEBPACK VAR INJECTION */(function($) {/**
 	 * Created by linxiaojie on 2015/11/17.
 	 */
-	var event = __webpack_require__(1);
-	View = __webpack_require__(5),
-	    _template = __webpack_require__(15),
+	var event = __webpack_require__(2);
+	View = __webpack_require__(6),
+	    _template = __webpack_require__(16),
 	    request = __webpack_require__(3),
-	    globalEvent = __webpack_require__(11);
+	    globalEvent = __webpack_require__(12);
 	
 	var UPDATE_COIN_COUNTER = 1000; //时间计时器更新间隔
 	
 	var Gather = View.extends({
 	    template: _template,
 	    model:{
-	        is_full: 0, //是否收集满了
+	        digprogress: '0%', //采集进度
+	        dig_format_time: '00:00:00', //显示计时器的时间
 	        total_gather_coin: 0, //已收集流量币
 	        pitmark: 0, //采集状态： 未开始：0, 不可领取：1，可领取 2
 	        digseconds: 0,//	挖掘的时间 秒
@@ -11675,18 +11862,62 @@
 	            return function (text) {
 	                return  text ;
 	            }
+	        },
+	        gather_fn: function(){
+	            this.full = false;
+	            if(this.digprogress === '100%'){
+	                this.full = true;
+	            }
+	            return function (text) {
+	                return  text ;
+	            }
 	        }
 	    },
 	    events: {
-	        'click .gather-btn': 'gather'
+	        'click .gather-btn': 'onGatherClick'
 	    },
 	    type: {
 	        render: globalEvent.gather.render
 	    },
+	    onGatherClick: function(){
+	        var me = this,
+	            model = me.model;
+	        if(!!this.gather_click && this.gather_click == 'lock'){
+	            return ;
+	        }
+	        this.gather_click = 'lock';
+	        //可领取 or 开始挖矿
+	        if(model.pitmark === 0 || model.pitmark === 2){
+	            var cb = function(res){
+	                this.gather_click = 'unlock';
+	                if(res.retcode === 1 && model.pitmark !== 0){
+	                    var dialog = new Dialog({
+	                        el: '.coin-dialog-box',
+	                        model:{
+	                            type6: 1,
+	                            coin: this.model.total_gather_coin
+	                        }
+	                    });
+	                    setTimeout(function(){
+	                        dialog.$cnt.addClass("hide");
+	                        setTimeout(function(){
+	                            dialog.destroy();
+	                        }, 2000)
+	                    }, 2000);
+	                }
+	                this.model.total_gather_coin = 0;
+	                //更新赚流量界面
+	                event.trigger(globalEvent.bytecoin.render);//触发赚流量更新
+	            };
+	            request.post(request.gather.bytecoin_pit).done($.proxy(cb, this));
+	        }
+	    },
 	    render: function(e, data){
 	        var me = this;
 	        console.count('gather.render');
+	        //console.table(me.model);
 	        me.model = $.extend({}, me.model, data || {});
+	        //console.log(me.model);
 	        me.doMath();
 	        me.$el.html(me.template(me.model));
 	    },
@@ -11702,27 +11933,36 @@
 	            model = me.model;
 	        //是否开始收集
 	        if(model.pitmark != 0 ){
-	            var digseconds = model.digseconds,
-	                maxSeconds = model.digmaxtime * 60 * 1000;
-	            //超过最大收集时间，收集满了
-	            if(digseconds >= maxSeconds ){
-	                me.setFull();
+	            if(me.isFull()){
 	                me.stopCounter();
-	            }else { //未收集满，启动定时器
-	                me.coinCounter == null && me.counter();
+	            }else{
+	                me.counter();
 	            }
+	            me.formateDigSeconds();
+	            me.caculateProgress();
 	            me.counterGatherCoin();
 	        }
 	    },
-	    /*
-	        设置采集状态
-	     */
-	    setFull: function(){
-	        this.model.digseconds = this.model.digmaxtime * 60 * 1000;
-	        this.model.is_full = 1;
-	    },
 	    stopCounter: function(){
 	        this.coinCounter&&clearTimeout(this.coinCounter);
+	        this.coinCounter = null;
+	    },
+	    /*
+	        收集满不再跑定时器
+	     */
+	    isFull: function(){
+	        var me = this,
+	            res = false,
+	            model = me.model,
+	            digseconds = model.digseconds,
+	            maxSeconds = model.digmaxtime * 60 * 60;
+	        //超过最大收集时间，收集满了
+	        if(digseconds >= maxSeconds ){
+	            //console.warn("stopCounter");
+	            this.model.digseconds = maxSeconds;
+	            res = true;
+	        }
+	        return res;
 	    },
 	    /*
 	        按时间计算收集的流量币数量
@@ -11734,9 +11974,10 @@
 	            digseconds = model.digseconds;
 	        if(digseconds > 0){
 	            var coin = me.model.total_gather_coin = Math.floor(digseconds / 60 / model.bigtime)  * model.digbytecoin;
-	            if(coin > 0){
-	                me.model.bigtime = 2;
-	            }
+	            coin > 0 && (
+	                    me.model.total_gather_coin = coin,
+	                    me.model.pitmark = 2
+	            );
 	        }
 	    },
 	    /*
@@ -11744,14 +11985,33 @@
 	     */
 	    counter: function(){
 	        var me = this;
-	        console.count('gather.counter');
-	        if(me.counter == null){
-	            me.coinCounter = setTimeout(function(){
-	                me.model.digseconds ++;
-	                me.render();//更新采集界面
-	                me.counter();
-	            }, UPDATE_COIN_COUNTER);
+	        //console.count('gather.counter');
+	        me.stopCounter();
+	        me.coinCounter = setTimeout(function(){
+	            me.model.digseconds++;
+	            me.render();//更新采集界面
+	        }, UPDATE_COIN_COUNTER);
+	    },
+	    caculateProgress: function(){
+	        var maxSeconds = this.model.digmaxtime * 60 * 60;
+	        this.model.digprogress = (this.model.digseconds * 100 / maxSeconds ) + '%';
+	    },
+	    formateDigSeconds: function(){
+	        var digseconds = this.model.digseconds,
+	            t, s = '', e, n = 60;
+	        //console.count('formateDigSeconds');
+	        for(var i=0; i < 3; i++){
+	            if(digseconds != 0){
+	                e = digseconds % n ;
+	                t = e === 0 ? '00' : (e < 10 ? '0' + e : e);
+	                s = s == '' ? t : t + ':' + s ;
+	                digseconds = parseInt(digseconds / n, 10);
+	            }else{
+	                s = s == '' ? '00' : '00:' + s ;
+	            }
 	        }
+	
+	        this.model.dig_format_time = s;
 	    },
 	    addEvent: function(){
 	        var me = this;
@@ -11762,6 +12022,7 @@
 	        this.coinCounter = null; //流量币时间计时器
 	        //console.log(this.model);
 	        event.trigger(this.type.render);
+	        this.counter(); //启动定时器
 	    },
 	    destroy: function(){
 	        event.off('gather');
@@ -11771,14 +12032,349 @@
 	
 	module.exports = Gather;
 	
-	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(2)))
+	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(1)))
 
 /***/ },
-/* 15 */
+/* 16 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var H = __webpack_require__(8);
-	module.exports = function() { var T = new H.Template({code: function (c,p,i) { var t=this;t.b(i=i||"");t.b("<div class=\"gather\"><div class=\"gather-bar\"><p class=\"gather-progress\" style=\"width: 20%\"></p><div class=\"gather-time\">");t.b(t.v(t.f("digseconds",c,p,0)));t.b(" <span class=\"gather-time-union\">0</span> <span class=\"gather-time-union\">0</span> <span>:</span> <span class=\"gather-time-union\">0</span> <span class=\"gather-time-union\">3</span> <span>:</span> <span class=\"gather-time-union\">1</span> <span class=\"gather-time-union\">1</span></div></div><div class=\"gather-game\">i am gather game</div><div class=\"gather-btn-wrapper\"><p>已采集<span>");t.b(t.v(t.f("total_gather_coin",c,p,0)));t.b("</span>枚流量币</p><div>");if(!t.s(t.f("pitmark",c,p,1),c,p,1,0,0,"")){t.b("<a class=\"gather-btn\">开始采集</a>");};t.b(" ");if(t.s(t.f("pitmark",c,p,1),c,p,0,620,688,"{{ }}")){t.rs(c,p,function(c,p,t){t.b(" ");if(t.s(t.f("pit_fn",c,p,1),c,p,0,632,676,"{{ }}")){t.rs(c,p,function(c,p,t){t.b(" <a class=\"gather-btn ");t.b(t.v(t.f("pit_class",c,p,0)));t.b("\">领取</a> ");});c.pop();}t.b(" ");});c.pop();}t.b("</div></div></div>");return t.fl(); },partials: {}, subs: {  }}, "<div class=\"gather\"><div class=\"gather-bar\"><p class=\"gather-progress\" style=\"width: 20%\"></p><div class=\"gather-time\">{{digseconds}} <span class=\"gather-time-union\">0</span> <span class=\"gather-time-union\">0</span> <span>:</span> <span class=\"gather-time-union\">0</span> <span class=\"gather-time-union\">3</span> <span>:</span> <span class=\"gather-time-union\">1</span> <span class=\"gather-time-union\">1</span></div></div><div class=\"gather-game\">i am gather game</div><div class=\"gather-btn-wrapper\"><p>已采集<span>{{total_gather_coin}}</span>枚流量币</p><div>{{^pitmark}}<a class=\"gather-btn\">开始采集</a>{{/pitmark}} {{#pitmark}} {{#pit_fn}} <a class=\"gather-btn {{pit_class}}\">领取</a> {{/pit_fn}} {{/pitmark}}</div></div></div>", H);return T.render.apply(T, arguments); };
+	var H = __webpack_require__(9);
+	module.exports = function() { var T = new H.Template({code: function (c,p,i) { var t=this;t.b(i=i||"");t.b("<div class=\"panel\"><div class=\"panel\"><div class=\"panel-hd\"><div class=\"panel-hd-tit-box\"><img class=\"icon-coin\" src=\"public/images/icon_coin.png\"><span class=\"panel-hd-tit\">明细</span></div></div><div class=\"panel-bd\"><div class=\"gather\"><div class=\"gather-bar\"><div class=\"gather-progress\"></div><div class=\"gather-progress-cnt\"><div class=\"gather-progress-status\" style=\"width:");t.b(t.v(t.f("digprogress",c,p,0)));t.b("\"></div></div><div class=\"gather-time\"><span class=\"gather-time-union\">");if(!t.s(t.f("pitmark",c,p,1),c,p,1,0,0,"")){t.b("你还未开工哦");};t.b(" ");if(t.s(t.f("pitmark",c,p,1),c,p,0,507,607,"{{ }}")){t.rs(c,p,function(c,p,t){t.b(" ");if(t.s(t.f("gather_fn",c,p,1),c,p,0,522,592,"{{ }}")){t.rs(c,p,function(c,p,t){t.b(" ");if(t.s(t.f("full",c,p,1),c,p,0,532,538,"{{ }}")){t.rs(c,p,function(c,p,t){t.b(" 采集完成 ");});c.pop();}t.b(" ");if(!t.s(t.f("full",c,p,1),c,p,1,0,0,"")){t.b(" 采集中-");t.b(t.v(t.f("dig_format_time",c,p,0)));t.b(" ");};t.b(" ");});c.pop();}t.b(" ");});c.pop();}t.b("</span></div></div><div class=\"gather-game\"></div><p class=\"gather-coin\">");if(t.s(t.f("pitmark",c,p,1),c,p,0,704,769,"{{ }}")){t.rs(c,p,function(c,p,t){t.b("已采集<span class=\"gather-coin-num\">");t.b(t.v(t.f("total_gather_coin",c,p,0)));t.b("</span>枚流量币");});c.pop();}t.b(" ");if(!t.s(t.f("pitmark",c,p,1),c,p,1,0,0,"")){t.b("您还未采集流量币");};t.b("</p>");if(!t.s(t.f("pitmark",c,p,1),c,p,1,0,0,"")){t.b("<a class=\"gather-btn\">开始采集</a>");};t.b(" ");if(t.s(t.f("pitmark",c,p,1),c,p,0,885,953,"{{ }}")){t.rs(c,p,function(c,p,t){t.b(" ");if(t.s(t.f("pit_fn",c,p,1),c,p,0,897,941,"{{ }}")){t.rs(c,p,function(c,p,t){t.b(" <a class=\"gather-btn ");t.b(t.v(t.f("pit_class",c,p,0)));t.b("\">领取</a> ");});c.pop();}t.b(" ");});c.pop();}t.b("</div></div></div></div>");return t.fl(); },partials: {}, subs: {  }}, "<div class=\"panel\"><div class=\"panel\"><div class=\"panel-hd\"><div class=\"panel-hd-tit-box\"><img class=\"icon-coin\" src=\"public/images/icon_coin.png\"><span class=\"panel-hd-tit\">明细</span></div></div><div class=\"panel-bd\"><div class=\"gather\"><div class=\"gather-bar\"><div class=\"gather-progress\"></div><div class=\"gather-progress-cnt\"><div class=\"gather-progress-status\" style=\"width:{{digprogress}}\"></div></div><div class=\"gather-time\"><span class=\"gather-time-union\">{{^pitmark}}你还未开工哦{{/pitmark}} {{#pitmark}} {{#gather_fn}} {{#full}} 采集完成 {{/full}} {{^full}} 采集中-{{dig_format_time}} {{/full}} {{/gather_fn}} {{/pitmark}}</span></div></div><div class=\"gather-game\"></div><p class=\"gather-coin\">{{#pitmark}}已采集<span class=\"gather-coin-num\">{{total_gather_coin}}</span>枚流量币{{/pitmark}} {{^pitmark}}您还未采集流量币{{/pitmark}}</p>{{^pitmark}}<a class=\"gather-btn\">开始采集</a>{{/pitmark}} {{#pitmark}} {{#pit_fn}} <a class=\"gather-btn {{pit_class}}\">领取</a> {{/pit_fn}} {{/pitmark}}</div></div></div></div>", H);return T.render.apply(T, arguments); };
+
+/***/ },
+/* 17 */
+/***/ function(module, exports, __webpack_require__) {
+
+	/* WEBPACK VAR INJECTION */(function($) {/**
+	 * Created by linxiaojie on 2015/11/19.
+	 */
+	
+	var event = __webpack_require__(2);
+	View = __webpack_require__(6),
+	    Dialog = __webpack_require__(18),
+	    _template = __webpack_require__(20),
+	    globalEvent = __webpack_require__(12),
+	    request = __webpack_require__(3);
+	
+	var maxDelayTime = 1000 * 60 * 60 * 24;
+	
+	var Spend = View.extends({
+	    template: _template,
+	    model: {
+	        coinnum: 0.0,//用户流量币数
+	        activity_start_time: '',
+	        activity_end_time: '',
+	        disable: 'disable',//是否可以抢购
+	        activitylist:[
+	            /*{
+	             id: 1,//		商品id
+	             goods_name: '4G单模流量',	//商品名称
+	             flow_limit: '50', //流量额度
+	             price: 50,		//价格
+	             convertible_number:	1000,//可兑换次数
+	             exchange_number: 0,//	已兑换次数
+	             pic_url: 'http://mmdm.aspire-tech.com/fx/demo/guifang/assets/image/5.png',//	配图
+	             activity_start_time: '20151118172021',//	活动开始时间
+	             activity_end_time: '20151118212021',//	活动结束时间
+	             retcode: 0//		抢购按钮显示状态 0 可抢购 1 已抢购 2 已抢光
+	             }*/
+	        ]
+	    },
+	    type: {
+	        render: globalEvent.spend.render,
+	    },
+	    events:{
+	        'click .spend-btn': 'onSpendClick'
+	    },
+	    onSpendClick: function(e){
+	        var me = this,
+	            model = this.model,
+	            curSpend = null;
+	        if(e.originalEvent) {
+	            e = e.originalEvent;
+	        }
+	        var tag = e.target;
+	        if($(tag).hasClass('disable')){
+	            return;
+	        }
+	        var $spend =$(tag).parent('.spend');
+	        var id = $spend.data('id'),
+	            price = $spend.data('price'),
+	            flow_limit = $spend.data("flow_limit"),
+	            goods_name = $spend.data("goods_name");
+	        new Dialog({
+	            el: '.coin-dialog-box',
+	            success: function(){
+	                me.spendOrder(id, price, flow_limit, goods_name);
+	                this.destroy();
+	            },
+	            model:{
+	                type1: 1,
+	                flow_limit: flow_limit,
+	                goods_name: goods_name,
+	                price: price
+	            }
+	        });
+	    },
+	    spendOrder: function(flowid, price, flow_limit, goods_name){
+	        var me = this,
+	            model = this.model;
+	        if(model.coinnum < price){
+	            me.earnMoreCoin(price);
+	        }else {
+	            request.post(request.spend.bytecoin_flow, {
+	                flowid: flowid
+	            }).done(function(res){
+	                if(res == null){
+	                    return ;
+	                }
+	                /* 0 抢购失败
+	                 1 抢购成功
+	                 2 已抢购
+	                 3 抢光了
+	                 4 该抢购产品不存在或已下架
+	                 5 流量币余额不足
+	                 6 已过抢购时间了*/
+	                if(res.retcode === 0 ){
+	
+	                }else if(res.retcode === 1){
+	                    new Dialog({
+	                        el: '.coin-dialog-box',
+	                        success: function(){
+	                            event.trigger(globalEvent.bytecoin.render);
+	                            this.destroy();
+	                        },
+	                        model:{
+	                            type3: 1,
+	                            flow_limit: flow_limit,
+	                            goods_name: goods_name
+	                        }
+	                    });
+	                }else if(res.retcode === 2){
+	
+	                }else if(res.retcode === 3){
+	                    new Dialog({
+	                        el: '.coin-dialog-box',
+	                        success: function(){
+	                            this.destroy();
+	                        },
+	                        model:{
+	                            type4: 1,
+	                            flow_limit: flow_limit,
+	                            goods_name: goods_name
+	                        }
+	                    });
+	                }else if(res.retcode === 4 || res.retcode === 6){
+	                    new Dialog({
+	                        el: '.coin-dialog-box',
+	                        success: function(){
+	                            this.destroy();
+	                        },
+	                        model:{
+	                            type5: 1
+	                        }
+	                    });
+	                }else if(res.retcode === 5){
+	                    me.earnMoreCoin(price);
+	                }
+	
+	
+	                me.render();
+	            });
+	        }
+	    },
+	    earnMoreCoin: function(price){
+	        new Dialog({
+	            el: '.coin-dialog-box',
+	            model:{
+	                type2: 1,
+	                price: price
+	            },
+	            success: function(){
+	                event.trigger(globalEvent.tabs.switch, [0]);
+	                this.destroy();
+	            }
+	        })
+	    },
+	    /*    findSpend: function(id){
+	     if(!!id){
+	     $.each(this.model.activitylist, function(){
+	     var spend = this;
+	     console.log(spend);
+	     console.log(id)
+	     if((spend.id + '') === (id + '')){
+	     return spend;
+	     }
+	     });
+	     }
+	     },*/
+	    render: function(e){
+	        var me = this;
+	        console.count('sepnd.render');
+	        request.get(request.spend.bytecoin_spend).done(function(res){
+	            me.model = $.extend({}, me.model, res || {});
+	            me.dataFormate();
+	            me.renderFn(res);
+	        });
+	    },
+	    renderFn: function(){
+	        var me = this;
+	        me.$el.html(me.template(me.model));
+	    },
+	    dataFormate: function(){
+	        var b = function(date){
+	            var res = {time: '', time_formate: 0}, reg = /^(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})$/;
+	            var matcher = (date + '').match(reg);
+	            if(matcher && matcher.length > 6){
+	                res.time =  matcher[2] + '月' + matcher[3] + '日-'
+	                    + matcher[4] + ':' + matcher[5];
+	
+	                var d = new Date(matcher[1], (matcher[2] - 1), matcher[3], matcher[4], matcher[5]
+	                    , matcher[6]);
+	                res.time_formate = d.valueOf();
+	            }
+	            return res;
+	        };
+	
+	        var activitylist = [];
+	        $.each(this.model.activitylist, function(){
+	            var spend = this;
+	            //console.log(spend);
+	            if(spend.retcode === 0){
+	                spend['spend_btn_txt'] = '马上抢';
+	            }else if(spend.retcode === 1){
+	                spend['spend_btn_txt'] = '抢过了';
+	            }else if(spend.retcode === 2){
+	                spend['spend_btn_txt'] = '抢完了';
+	            }
+	            activitylist.push(spend);
+	        });
+	        var res = b(this.model.activity_start_time);
+	        var activity_start_time = res.time;
+	        var activity_end_time = (b(this.model.activity_end_time)).time;
+	
+	
+	
+	        this.model = $.extend({}, this.model, {
+	            activity_start_time: activity_start_time,
+	            activity_end_time: activity_end_time,
+	            activitylist : activitylist,
+	            //start_time_formate: res.time_formate //开始抢购时间
+	        });
+	
+	        this.checkSpend(res.time_formate);
+	
+	    },
+	    checkSpend: function(start){
+	        var me = this,
+	            duration = start - Date.now();
+	        if(duration > 0){
+	            me.model.disable = '';
+	            me.renderFn();
+	            if(duration < maxDelayTime){
+	                setTimeout(function(){
+	                    me.model.disable = 'disable';
+	                    me.renderFn();
+	                }, duration);
+	            }
+	        }
+	    },
+	    addEvent: function(){
+	        var me = this;
+	        event.on(me.type.render, $.proxy(me.render, me));
+	    },
+	    init: function(){
+	        var me = this;
+	        me.addEvent();
+	        event.trigger(me.type.render);
+	    },
+	    destroy: function(){
+	    }
+	});
+	
+	module.exports = Spend;
+	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(1)))
+
+/***/ },
+/* 18 */
+/***/ function(module, exports, __webpack_require__) {
+
+	/* WEBPACK VAR INJECTION */(function($) {/**
+	 * Created by linxiaojie on 2015/11/19.
+	 */
+	
+	var event = __webpack_require__(2);
+	View = __webpack_require__(6),
+	    _template = __webpack_require__(19),
+	    Dialog = __webpack_require__(18),
+	    globalEvent = __webpack_require__(12);
+	var Dialog = View.extends({
+	    template: _template,
+	    model: {
+	        type1: 0, //抢购二次提示框
+	    },
+	    events:{
+	        'click .coin-dialog-btn-cancel': 'onDialogCancel',
+	        'click .coin-dialog-btn-success': 'onDialogSuccess',
+	        'click .coin-dialog-btn-close' : 'onDialogSuccess'
+	    },
+	    onDialogCancel: function(){
+	        this.destroy();
+	    },
+	    onDialogSuccess: function(){
+	        this.options.success.apply(this, this.slice(arguments));
+	    },
+	    onDialogClick: function(e){
+	        var me = this,
+	            model = this.model,
+	            curDialog = null;
+	        if(e.originalEvent) {
+	            e = e.originalEvent;
+	        }
+	        var tag = e.target;
+	        var $btn = $(tag);
+	        var id = $(tag).parent('.Dialog').data('id');
+	        curDialog = model.Dialogs[id];
+	        if(curDialog){
+	            if(curDialog.price > model.coinnum){
+	
+	            }
+	        }
+	
+	    },
+	    render: function(e, data){
+	        var me = this;
+	        console.count('dialog.render');
+	        me.model = $.extend({}, me.model, data || {});
+	        me.$cnt = $(me.template(me.model));
+	        me.$el.append(me.$cnt);
+	    },
+	    init: function(){
+	        var me = this;
+	        this.render();
+	    },
+	    destroy: function(){
+	        this.undelegateEvents();
+	        this.$cnt && this.$cnt.remove();
+	    }
+	});
+	
+	module.exports = Dialog;
+	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(1)))
+
+/***/ },
+/* 19 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var H = __webpack_require__(9);
+	module.exports = function() { var T = new H.Template({code: function (c,p,i) { var t=this;t.b(i=i||"");t.b("<div class=\"coin-mask\">");if(t.s(t.f("type1",c,p,1),c,p,0,33,402,"{{ }}")){t.rs(c,p,function(c,p,t){t.b("<div class=\"coin-dialog\"><h3>是否确认抢购</h3><div class=\"coin-dialog-info\"><p class=\"coin-dialog-info-tit\">");t.b(t.v(t.f("flow_limit",c,p,0)));t.b("M&nbsp;&nbsp;");t.b(t.v(t.f("goods_name",c,p,0)));t.b("</p><p class=\"coin-dialog-info-cost\">价格：");t.b(t.v(t.f("price",c,p,0)));t.b("流量币</p></div><div class=\"coin-dialog-btns\"><a href=\"javascript:;\" class=\"coin-dialog-btn-success\">确定</a> <a href=\"javascript:;\" class=\"coin-dialog-btn-cancel\">取消</a></div></div>");});c.pop();}t.b(" ");if(t.s(t.f("type2",c,p,1),c,p,0,423,757,"{{ }}")){t.rs(c,p,function(c,p,t){t.b("<div class=\"coin-dialog\"><h3>对不起</h3><div class=\"coin-dialog-info\"><p class=\"coin-dialog-info-tit\">您的流量币不足</p><p class=\"coin-dialog-info-cost\">还需");t.b(t.v(t.f("price",c,p,0)));t.b("个流量币</p></div><div class=\"coin-dialog-btns\"><a href=\"javascript:;\" class=\"coin-dialog-btn-success\">赚流量币</a> <a href=\"javascript:;\" class=\"coin-dialog-btn-cancel\">关闭</a></div></div>");});c.pop();}t.b(" ");if(t.s(t.f("type3",c,p,1),c,p,0,778,997,"{{ }}")){t.rs(c,p,function(c,p,t){t.b("<div class=\"coin-dialog\"><h3>恭喜您成功抢购</h3><div class=\"coin-dialog-info\"><p class=\"coin-dialog-info-txt\">");t.b(t.v(t.f("flow_limit",c,p,0)));t.b("M&nbsp;&nbsp;");t.b(t.v(t.f("goods_name",c,p,0)));t.b("</p></div><a href=\"javascript:;\" class=\"coin-dialog-btn-close\">确定</a></div>");});c.pop();}t.b(" ");if(t.s(t.f("type4",c,p,1),c,p,0,1018,1225,"{{ }}")){t.rs(c,p,function(c,p,t){t.b("<div class=\"coin-dialog\"><div class=\"coin-dialog-info\"><img src=\"public/images/none.png\" alt=\"\"><p class=\"coin-dialog-info-txt2\">对不起!已经给抢完啦~T_T</p></div><a href=\"#\" class=\"coin-dialog-btn-close\">关闭</a></div>");});c.pop();}t.b(" ");if(t.s(t.f("type5",c,p,1),c,p,0,1246,1456,"{{ }}")){t.rs(c,p,function(c,p,t){t.b("<div class=\"coin-dialog\"><div class=\"coin-dialog-info\"><img src=\"public/images/outdate.png\" alt=\"\"><p class=\"coin-dialog-info-txt2\">对不起!活动已过期啦~T_T</p></div><a href=\"#\" class=\"coin-dialog-btn-close\">关闭</a></div>");});c.pop();}t.b(" ");if(t.s(t.f("type6",c,p,1),c,p,0,1477,1568,"{{ }}")){t.rs(c,p,function(c,p,t){t.b("<div class=\"coin-dialog-earn\">流量币+<span class=\"coin-dialog-earn-coin\">");t.b(t.v(t.f("coin",c,p,0)));t.b("</span></div>");});c.pop();}t.b("</div>");return t.fl(); },partials: {}, subs: {  }}, "<div class=\"coin-mask\">{{#type1}}<div class=\"coin-dialog\"><h3>是否确认抢购</h3><div class=\"coin-dialog-info\"><p class=\"coin-dialog-info-tit\">{{flow_limit}}M&nbsp;&nbsp;{{goods_name}}</p><p class=\"coin-dialog-info-cost\">价格：{{price}}流量币</p></div><div class=\"coin-dialog-btns\"><a href=\"javascript:;\" class=\"coin-dialog-btn-success\">确定</a> <a href=\"javascript:;\" class=\"coin-dialog-btn-cancel\">取消</a></div></div>{{/type1}} {{#type2}}<div class=\"coin-dialog\"><h3>对不起</h3><div class=\"coin-dialog-info\"><p class=\"coin-dialog-info-tit\">您的流量币不足</p><p class=\"coin-dialog-info-cost\">还需{{price}}个流量币</p></div><div class=\"coin-dialog-btns\"><a href=\"javascript:;\" class=\"coin-dialog-btn-success\">赚流量币</a> <a href=\"javascript:;\" class=\"coin-dialog-btn-cancel\">关闭</a></div></div>{{/type2}} {{#type3}}<div class=\"coin-dialog\"><h3>恭喜您成功抢购</h3><div class=\"coin-dialog-info\"><p class=\"coin-dialog-info-txt\">{{flow_limit}}M&nbsp;&nbsp;{{goods_name}}</p></div><a href=\"javascript:;\" class=\"coin-dialog-btn-close\">确定</a></div>{{/type3}} {{#type4}}<div class=\"coin-dialog\"><div class=\"coin-dialog-info\"><img src=\"public/images/none.png\" alt=\"\"><p class=\"coin-dialog-info-txt2\">对不起!已经给抢完啦~T_T</p></div><a href=\"#\" class=\"coin-dialog-btn-close\">关闭</a></div>{{/type4}} {{#type5}}<div class=\"coin-dialog\"><div class=\"coin-dialog-info\"><img src=\"public/images/outdate.png\" alt=\"\"><p class=\"coin-dialog-info-txt2\">对不起!活动已过期啦~T_T</p></div><a href=\"#\" class=\"coin-dialog-btn-close\">关闭</a></div>{{/type5}} {{#type6}}<div class=\"coin-dialog-earn\">流量币+<span class=\"coin-dialog-earn-coin\">{{coin}}</span></div>{{/type6}}</div>", H);return T.render.apply(T, arguments); };
+
+/***/ },
+/* 20 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var H = __webpack_require__(9);
+	module.exports = function() { var T = new H.Template({code: function (c,p,i) { var t=this;t.b(i=i||"");t.b("<div class=\"activity\"><div class=\"activity-hidden ");t.b(t.v(t.f("disable",c,p,0)));t.b("\"><div class=\"activity-alert\"><h3>下次流量抢购</h3><div class=\"activity-alert-info\">");t.b(t.v(t.f("activity_start_time",c,p,0)));t.b("</div></div></div><p class=\"activity-tit\">");t.b(t.v(t.f("activity_start_time",c,p,0)));t.b("~");t.b(t.v(t.f("activity_end_time",c,p,0)));t.b("</p><hr><div class=\"spends\">");if(t.s(t.f("activitylist",c,p,1),c,p,0,294,844,"{{ }}")){t.rs(c,p,function(c,p,t){t.b("<div class=\"spend\" data-id=\"");t.b(t.v(t.f("id",c,p,0)));t.b("\" data-flow_limit=\"");t.b(t.v(t.f("flow_limit",c,p,0)));t.b("\" data-goods_name=\"");t.b(t.v(t.f("goods_name",c,p,0)));t.b("\" data-price=\"");t.b(t.v(t.f("price",c,p,0)));t.b("\" data-convertible_number=\"");t.b(t.v(t.f("convertible_number",c,p,0)));t.b("\" data-retcode=\"");t.b(t.v(t.f("retcode",c,p,0)));t.b("\"><img src=\"");t.b(t.v(t.f("pic_url",c,p,0)));t.b("\" alt=\"");t.b(t.v(t.f("goods_name",c,p,0)));t.b("\"><div class=\"spend-info\"><p class=\"spend-info-name\">");t.b(t.v(t.f("flow_limit",c,p,0)));t.b("M&nbsp;&nbsp;");t.b(t.v(t.f("goods_name",c,p,0)));t.b("</p><p class=\"spend-info-cost\">需要");t.b(t.v(t.f("price",c,p,0)));t.b("个流量币</p><p class=\"spend-info-count\">剩余");t.b(t.v(t.f("convertible_number",c,p,0)));t.b("份</p></div><a href=\"javascript:;\" class=\"spend-btn ");if(t.s(t.f("retcode",c,p,1),c,p,0,796,803,"{{ }}")){t.rs(c,p,function(c,p,t){t.b("disable");});c.pop();}t.b("\">");t.b(t.v(t.f("spend_btn_txt",c,p,0)));t.b("</a></div>");});c.pop();}t.b("</div></div>");return t.fl(); },partials: {}, subs: {  }}, "<div class=\"activity\"><div class=\"activity-hidden {{disable}}\"><div class=\"activity-alert\"><h3>下次流量抢购</h3><div class=\"activity-alert-info\">{{activity_start_time}}</div></div></div><p class=\"activity-tit\">{{activity_start_time}}~{{activity_end_time}}</p><hr><div class=\"spends\">{{#activitylist}}<div class=\"spend\" data-id=\"{{id}}\" data-flow_limit=\"{{flow_limit}}\" data-goods_name=\"{{goods_name}}\" data-price=\"{{price}}\" data-convertible_number=\"{{convertible_number}}\" data-retcode=\"{{retcode}}\"><img src=\"{{pic_url}}\" alt=\"{{goods_name}}\"><div class=\"spend-info\"><p class=\"spend-info-name\">{{flow_limit}}M&nbsp;&nbsp;{{goods_name}}</p><p class=\"spend-info-cost\">需要{{price}}个流量币</p><p class=\"spend-info-count\">剩余{{convertible_number}}份</p></div><a href=\"javascript:;\" class=\"spend-btn {{#retcode}}disable{{/retcode}}\">{{spend_btn_txt}}</a></div>{{/activitylist}}</div></div>", H);return T.render.apply(T, arguments); };
 
 /***/ }
 /******/ ]);

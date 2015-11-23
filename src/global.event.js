@@ -19,5 +19,11 @@ module.exports = {
     },
     gather: {
         render: 'gather.render'
+    },
+    spend: {
+        render: 'spend.render'
+    },
+    tabs: {
+        switch: 'tabs.switch'
     }
 };

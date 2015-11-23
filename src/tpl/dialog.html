@@ -1,0 +1,64 @@
+<div class="coin-mask">
+    {{#type1}}
+    <div class="coin-dialog">
+        <h3>是否确认抢购</h3>
+        <div class="coin-dialog-info">
+            <p class="coin-dialog-info-tit">{{flow_limit}}M&nbsp;&nbsp;{{goods_name}}</p>
+            <p class="coin-dialog-info-cost">价格：{{price}}流量币</p>
+        </div>
+        <div class="coin-dialog-btns">
+            <a href="javascript:;" class="coin-dialog-btn-success">确定</a>
+            <a href="javascript:;" class="coin-dialog-btn-cancel">取消</a>
+        </div>
+    </div>
+    {{/type1}}
+    {{#type2}}
+    <div class="coin-dialog">
+        <h3>对不起</h3>
+        <div class="coin-dialog-info">
+            <p class="coin-dialog-info-tit">您的流量币不足</p>
+            <p class="coin-dialog-info-cost">还需{{price}}个流量币</p>
+        </div>
+        <div class="coin-dialog-btns">
+            <a href="javascript:;" class="coin-dialog-btn-success">赚流量币</a>
+            <a href="javascript:;" class="coin-dialog-btn-cancel">关闭</a>
+        </div>
+    </div>
+    {{/type2}}
+    {{#type3}}
+        <div class="coin-dialog">
+            <h3>恭喜您成功抢购</h3>
+            <div class="coin-dialog-info">
+                <p class="coin-dialog-info-txt">{{flow_limit}}M&nbsp;&nbsp;{{goods_name}}</p>
+            </div>
+            <a href="javascript:;" class="coin-dialog-btn-close">确定</a>
+        </div>
+    {{/type3}}
+
+    {{#type4}}
+        <div class="coin-dialog">
+            <div class="coin-dialog-info">
+                <img src="public/images/none.png" alt=""/>
+                <p class="coin-dialog-info-txt2">对不起!已经给抢完啦~T_T</p>
+            </div>
+            <a href="#" class="coin-dialog-btn-close">关闭</a>
+        </div>
+    {{/type4}}
+
+
+    {{#type5}}
+        <div class="coin-dialog">
+            <div class="coin-dialog-info">
+                <img src="public/images/outdate.png" alt=""/>
+                <p class="coin-dialog-info-txt2">对不起!活动已过期啦~T_T</p>
+            </div>
+            <a href="#" class="coin-dialog-btn-close">关闭</a>
+        </div>
+    {{/type5}}
+    {{#type6}}
+    <div class="coin-dialog-earn">
+        流量币+<span class="coin-dialog-earn-coin">{{coin}}</span>
+    </div>
+    {{/type6}}
+
+</div>

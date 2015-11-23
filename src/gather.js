@@ -25,6 +25,15 @@ var Gather = View.extends({
             return function (text) {
                 return  text ;
             }
+        },
+        gather_fn: function(){
+            this.full = false;
+            if(this.digprogress === '100%'){
+                this.full = true;
+            }
+            return function (text) {
+                return  text ;
+            }
         }
     },
     events: {
@@ -36,16 +45,32 @@ var Gather = View.extends({
     onGatherClick: function(){
         var me = this,
             model = me.model;
-/*        console.table({
-            'onGatherClick': model.pitmark
-        });*/
+        if(!!this.gather_click && this.gather_click == 'lock'){
+            return ;
+        }
+        this.gather_click = 'lock';
         //可领取 or 开始挖矿
         if(model.pitmark === 0 || model.pitmark === 2){
             var cb = function(res){
-                //更新赚流量界面
-                if(res.retcode === 1){
-                    event.trigger(globalEvent.bytecoin.render);//触发赚流量更新
+                this.gather_click = 'unlock';
+                if(res.retcode === 1 && model.pitmark !== 0){
+                    var dialog = new Dialog({
+                        el: '.coin-dialog-box',
+                        model:{
+                            type6: 1,
+                            coin: this.model.total_gather_coin
+                        }
+                    });
+                    setTimeout(function(){
+                        dialog.$cnt.addClass("hide");
+                        setTimeout(function(){
+                            dialog.destroy();
+                        }, 2000)
+                    }, 2000);
                 }
+                this.model.total_gather_coin = 0;
+                //更新赚流量界面
+                event.trigger(globalEvent.bytecoin.render);//触发赚流量更新
             };
             request.post(request.gather.bytecoin_pit).done($.proxy(cb, this));
         }
@@ -53,8 +78,9 @@ var Gather = View.extends({
     render: function(e, data){
         var me = this;
         console.count('gather.render');
-        console.table(me.model);
+        //console.table(me.model);
         me.model = $.extend({}, me.model, data || {});
+        //console.log(me.model);
         me.doMath();
         me.$el.html(me.template(me.model));
     },
@@ -70,19 +96,36 @@ var Gather = View.extends({
             model = me.model;
         //是否开始收集
         if(model.pitmark != 0 ){
-            var digseconds = model.digseconds,
-                maxSeconds = model.digmaxtime * 60 * 1000;
-            //超过最大收集时间，收集满了
-            if(digseconds >= maxSeconds ){
-                this.model.digseconds = this.model.digmaxtime * 60 * 1000;
+            if(me.isFull()){
                 me.stopCounter();
+            }else{
+                me.counter();
             }
             me.formateDigSeconds();
+            me.caculateProgress();
             me.counterGatherCoin();
         }
     },
     stopCounter: function(){
         this.coinCounter&&clearTimeout(this.coinCounter);
+        this.coinCounter = null;
+    },
+    /*
+        收集满不再跑定时器
+     */
+    isFull: function(){
+        var me = this,
+            res = false,
+            model = me.model,
+            digseconds = model.digseconds,
+            maxSeconds = model.digmaxtime * 60 * 60;
+        //超过最大收集时间，收集满了
+        if(digseconds >= maxSeconds ){
+            //console.warn("stopCounter");
+            this.model.digseconds = maxSeconds;
+            res = true;
+        }
+        return res;
     },
     /*
         按时间计算收集的流量币数量
@@ -106,16 +149,15 @@ var Gather = View.extends({
     counter: function(){
         var me = this;
         //console.count('gather.counter');
-        me.coinCounter = null;
+        me.stopCounter();
         me.coinCounter = setTimeout(function(){
             me.model.digseconds++;
             me.render();//更新采集界面
-            me.counter();
         }, UPDATE_COIN_COUNTER);
     },
     caculateProgress: function(){
-        var maxSeconds = this.model.digmaxtime * 60 * 1000;
-        this.model.digprogress = (this.model.digseconds / maxSeconds / 100) + '%';
+        var maxSeconds = this.model.digmaxtime * 60 * 60;
+        this.model.digprogress = (this.model.digseconds * 100 / maxSeconds ) + '%';
     },
     formateDigSeconds: function(){
         var digseconds = this.model.digseconds,

@@ -1,0 +1,29 @@
+<div class="activity">
+    <div class="activity-hidden {{disable}}">
+        <div class="activity-alert">
+            <h3>下次流量抢购</h3>
+            <div class="activity-alert-info">
+                {{activity_start_time}}
+            </div>
+        </div>
+    </div>
+    <p class="activity-tit">{{activity_start_time}}~{{activity_end_time}}</p>
+    <hr/>
+    <div class="spends">
+        {{#activitylist}}
+        <div class="spend" data-id="{{id}}"
+                data-flow_limit = "{{flow_limit}}" data-goods_name="{{goods_name}}"
+                data-price = "{{price}}" data-convertible_number = "{{convertible_number}}"
+                data-retcode="{{retcode}}"
+                >
+            <img src="{{pic_url}}" alt="{{goods_name}}"/>
+            <div class="spend-info">
+                <p class="spend-info-name">{{flow_limit}}M&nbsp;&nbsp;{{goods_name}}</p>
+                <p class="spend-info-cost">需要{{price}}个流量币</p>
+                <p class="spend-info-count">剩余{{convertible_number}}份</p>
+            </div>
+            <a href="javascript:;" class="spend-btn {{#retcode}}disable{{/retcode}}">{{spend_btn_txt}}</a>
+        </div>
+        {{/activitylist}}
+    </div>
+</div>

@@ -3,6 +3,7 @@
  */
 var event = require('./event');
 var request = require('./request');
+var tabs = require('./tabs');
 
 /*
     view
@@ -11,10 +12,19 @@ var request = require('./request');
 var User = require('./user'),
     SignIn = require('./signIn'),
     Gather = require('./gather'),
-    globalEvent = require('./global.event');
+    globalEvent = require('./global.event'),
+    Tabs = require('./tabs'),
+    Spend = require('./spend');
 
-var user = signIn = gather = null;
+var user = signIn = gather = spend = null ;
 
+//初始化tabs选项卡
+$(function(){
+    var tabs =  new Tabs(".tabs");
+    event.on(globalEvent.tabs.switch, function(e, idx){
+        tabs.goto(idx);
+    });
+});
 
 /*
     @res {object}数据集
@@ -58,6 +68,7 @@ var refresh = function(res, first){
     }
 };
 //首次加载
+//赚流量
 request.get(request.bytecoin.get).done(function(res){
     refresh(res, true);
 }).done(function(){
@@ -67,4 +78,10 @@ request.get(request.bytecoin.get).done(function(res){
             refresh(res);
         });
     });
+});
+
+
+//花流量
+spend = new Spend({
+    el: '#spend'
 });

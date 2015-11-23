@@ -12,6 +12,7 @@ var View = function(options){
     });*/
     this.cid = _.uniqueId('c');
     this.el = options['el'];
+    this.options = $.extend({}, this.options, options);
     this.model = $.extend({}, this.model, options.model || {});
     this._ensureElement();
     this.init.apply(this, arguments);
@@ -67,8 +68,12 @@ $.extend(View.prototype, {
         return this;
     },
     remove: function(){
+        this.undelegateEvents();
         this.$el && this.$el.remove();
         return this;
+    },
+    slice: function(cxt){
+        return [].slice.call(cxt);
     },
     destroy: function(){}
 });

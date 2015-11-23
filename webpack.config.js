@@ -3,7 +3,7 @@
  */
 var path = require('path');
 var webpack = require('webpack');
-var commonsPlugin = webpack.optimize.CommonsChunkPlugin;
+//var commonsPlugin = webpack.optimize.CommonsChunkPlugin;
 //var ExtractTextPlugin = require("extract-text-webpack-plugin");
 
 module.exports = {

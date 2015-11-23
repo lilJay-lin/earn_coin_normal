@@ -1,18 +1,22 @@
 <div class="signin">
     <div class="signin-info">
-        今日签到可领
+        {{^signmark}}今日签到可领
         <span class="signin-info-coin">
-            {{^signmark}}{{signnum}}{{/signmark}}
-            {{#signmark}}{{tmrsignnum}}{{/signmark}}
+            {{signnum}}
         </span>
         个流量币
+        {{/signmark}}
 
+        {{#signmark}}
+        明日签到可领
+        <span class="signin-info-coin">
+            {{tmrsignnum}}
+        </span>
+        个流量币
+        {{/signmark}}
     </div>
     <div>
         {{^signmark}}<a href="javascript:;" class="sigin-btn">签到</a>{{/signmark}}
+        {{#signmark}}<a href="javascript:;" class="sigin-btn disable">已签到</a>{{/signmark}}
     </div>
 </div>
-<script>
-
-
-</script>

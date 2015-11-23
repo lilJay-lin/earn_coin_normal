@@ -19,14 +19,15 @@ module.exports = {
     gather: {//流量矿井请求数据
         bytecoin_pit: 'http://localhost:8080/bytecoin_pit' //开始采集 or 领取
     },
-    cost:{//花流量模块请求数据
+    spend:{//花流量模块请求数据
+        bytecoin_spend: 'http://localhost:8080/bytecoin_spend',
         bytecoin_flow: 'http://localhost:8080/bytecoin_flow'
     },
     get: function(url,data){
         data = data == undefined ? null : data;
         return $.ajax({
             url: url,
-            method: 'get',
+            method: 'GET',
             dataType: 'json',
             cache: false,
             data: data
@@ -36,7 +37,7 @@ module.exports = {
         data = data == undefined ? null : data;
         return $.ajax({
             url: url,
-            method: 'post',
+            method: 'POST',
             dataType: 'json',
             contentType: 'application/json',
             cache: false,

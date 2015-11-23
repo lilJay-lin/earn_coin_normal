@@ -29,7 +29,17 @@ var SignIn = View.extends({
      */
     sign: function(e){
         e.preventDefault();
+        console.count('signin');
+        if(this.model.signmark){
+            return ;
+        }
+        if(!!this.sign_click && this.sign_click == 'lock'){
+            return ;
+        }
+        this.sign_click = 'lock';
+
         var cb = function(res){
+            this.sign_click = 'unlock';
             //console.log(res);
             //更新赚流量界面
             if(res.retcode === 1){
