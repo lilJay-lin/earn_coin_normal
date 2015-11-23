@@ -21,7 +21,7 @@ var Gather = View.extends({
         digmaxtime:4, //最多累计N小时
         digbytecoin: 0.25, //每bigtime分钟收集N个流量币
         pit_fn: function () {
-            this.pit_class = this.pitmark == 1 ? 'disable' : '';
+            this.pit_class = this.pitmark == "1" ? 'disable' : '';
             return function (text) {
                 return  text ;
             }
@@ -50,10 +50,10 @@ var Gather = View.extends({
         }
         this.gather_click = 'lock';
         //可领取 or 开始挖矿
-        if(model.pitmark === 0 || model.pitmark === 2){
+        if(model.pitmark == "0" || model.pitmark == "2"){
             var cb = function(res){
                 this.gather_click = 'unlock';
-                if(res.retcode === 1 && model.pitmark !== 0){
+                if(res.retcode == "1" && model.pitmark != "0"){
                     var dialog = new Dialog({
                         el: '.coin-dialog-box',
                         model:{
@@ -95,7 +95,7 @@ var Gather = View.extends({
         var me = this,
             model = me.model;
         //是否开始收集
-        if(model.pitmark != 0 ){
+        if(model.pitmark != "0" ){
             if(me.isFull()){
                 me.stopCounter();
             }else{

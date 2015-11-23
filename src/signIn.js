@@ -42,7 +42,7 @@ var SignIn = View.extends({
             this.sign_click = 'unlock';
             //console.log(res);
             //更新赚流量界面
-            if(res.retcode === 1){
+            if(res.retcode == '1'){
                 event.trigger(globalEvent.bytecoin.render);//触发赚流量更新
             }
         };

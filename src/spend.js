@@ -88,9 +88,9 @@ var Spend = View.extends({
                  4 该抢购产品不存在或已下架
                  5 流量币余额不足
                  6 已过抢购时间了*/
-                if(res.retcode === 0 ){
+                if(res.retcode == "0" ){
 
-                }else if(res.retcode === 1){
+                }else if(res.retcode == "1"){
                     new Dialog({
                         el: '.coin-dialog-box',
                         success: function(){
@@ -103,9 +103,9 @@ var Spend = View.extends({
                             goods_name: goods_name
                         }
                     });
-                }else if(res.retcode === 2){
+                }else if(res.retcode == "2"){
 
-                }else if(res.retcode === 3){
+                }else if(res.retcode == "3"){
                     new Dialog({
                         el: '.coin-dialog-box',
                         success: function(){
@@ -117,7 +117,7 @@ var Spend = View.extends({
                             goods_name: goods_name
                         }
                     });
-                }else if(res.retcode === 4 || res.retcode === 6){
+                }else if(res.retcode == "4" || res.retcode == "6"){
                     new Dialog({
                         el: '.coin-dialog-box',
                         success: function(){
@@ -127,7 +127,7 @@ var Spend = View.extends({
                             type5: 1
                         }
                     });
-                }else if(res.retcode === 5){
+                }else if(res.retcode == "5"){
                     me.earnMoreCoin(price);
                 }
 
@@ -193,13 +193,18 @@ var Spend = View.extends({
         $.each(this.model.activitylist, function(){
             var spend = this;
             //console.log(spend);
-            if(spend.retcode === 0){
+            if(spend.retcode == "0"){
                 spend['spend_btn_txt'] = '马上抢';
-            }else if(spend.retcode === 1){
+            }else if(spend.retcode == "1"){
                 spend['spend_btn_txt'] = '抢过了';
-            }else if(spend.retcode === 2){
+            }else if(spend.retcode == "2"){
                 spend['spend_btn_txt'] = '抢完了';
             }
+
+            //剩余份数
+            var a = spend['convertible_number'] - spend['exchange_number'];
+            spend['can_exchange_number'] = a < 0 ? 0 : a;
+
             activitylist.push(spend);
         });
         var res = b(this.model.activity_start_time);
