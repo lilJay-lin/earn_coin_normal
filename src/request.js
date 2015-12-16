@@ -7,21 +7,21 @@
  */
 module.exports = {
     bytecoin: {//赚流量页面请求数据
-        get: 'http://localhost:8080/bytecoin_get'
+        get: '/t.do?requestid=bytecoin_get'
     },
 
     user: {
-        get: 'http://localhost:8080/bytecoin_get'
+        get: '/t.do?requestid=bytecoin_get'
     },
     sign: {//签到组件请求数据
-        signIn: 'http://localhost:8080/bytecoin_signin' //签到
+        signIn: '/t.do?requestid=bytecoin_signin' //签到
     },
     gather: {//流量矿井请求数据
-        bytecoin_pit: 'http://localhost:8080/bytecoin_pit' //开始采集 or 领取
+        bytecoin_pit: '/t.do?requestid=bytecoin_pit' //开始采集 or 领取
     },
     spend:{//花流量模块请求数据
-        bytecoin_spend: 'http://localhost:8080/bytecoin_spend',
-        bytecoin_flow: 'http://localhost:8080/bytecoin_flow'
+        bytecoin_spend: '/t.do?requestid=bytecoin_spend',
+        bytecoin_flow: '/t.do?requestid=bytecoin_flow'
     },
     get: function(url,data){
         data = data == undefined ? null : data;
@@ -29,8 +29,15 @@ module.exports = {
             url: url,
             method: 'GET',
             dataType: 'json',
+           // timeout: 5000, //请求超时，看平台需不要设就设吧
             cache: false,
-            data: data
+            data: data,
+            success: function(data){//请求成功
+
+            },
+            error: function(xml, status, thrown){//请求失败
+
+            }
         });
     },
     post: function(url, data){
@@ -39,9 +46,15 @@ module.exports = {
             url: url,
             method: 'POST',
             dataType: 'json',
-            contentType: 'application/json',
             cache: false,
-            data: data
+            data: data,
+            // timeout: 5000, //请求超时，看平台需不要设就设吧
+            success: function(data){//请求成功
+
+            },
+            error: function(xml, status, thrown){//请求失败
+
+            }
         });
     }
 };

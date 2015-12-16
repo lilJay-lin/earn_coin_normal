@@ -75,6 +75,10 @@ $.extend(View.prototype, {
     slice: function(cxt){
         return [].slice.call(cxt);
     },
+    $: function(selector){
+        return this.$el.find(selector);
+    },
+    init: function(){},
     destroy: function(){}
 });
 

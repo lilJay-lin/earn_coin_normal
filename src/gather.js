@@ -5,8 +5,12 @@ var event = require('./event');
 View = require('./View'),
     _template = require('./tpl/gather.html'),
     request = require('./request'),
-    globalEvent = require('./global.event');
-
+    globalEvent = require('./global.event'),
+    Toast = require('./toast'),
+    Hint = require('./hint');
+var toast = new Toast({
+    el: document.body
+});
 var UPDATE_COIN_COUNTER = 1000; //时间计时器更新间隔
 
 var Gather = View.extends({
@@ -17,24 +21,17 @@ var Gather = View.extends({
         total_gather_coin: 0, //已收集流量币
         pitmark: 0, //采集状态： 未开始：0, 不可领取：1，可领取 2
         digseconds: 0,//	挖掘的时间 秒
-        bigtime: 15, //每N分钟计算一次
+        digtime: 15, //每N分钟计算一次
         digmaxtime:4, //最多累计N小时
-        digbytecoin: 0.25, //每bigtime分钟收集N个流量币
-        pit_fn: function () {
-            this.pit_class = this.pitmark == "1" ? 'disable' : '';
-            return function (text) {
-                return  text ;
-            }
-        },
-        gather_fn: function(){
-            this.full = false;
-            if(this.digprogress === '100%'){
-                this.full = true;
-            }
-            return function (text) {
-                return  text ;
-            }
-        }
+        digbytecoin: 0.25, //每digtime分钟收集N个流量币
+        gather_time_union_txt: '',
+        pit_class: '',
+        gather_game_pic: '/public/images/g_s.png'
+    },
+    gatherGameState: {
+        start: '/public/images/g_s.png',
+        running: '/public/images/g_m.gif',
+        end: '/public/images/g_e.gif'
     },
     events: {
         'click .gather-btn': 'onGatherClick'
@@ -42,18 +39,31 @@ var Gather = View.extends({
     type: {
         render: globalEvent.gather.render
     },
-    onGatherClick: function(){
+    setGatherGamePic: function(){
+        var me = this,
+            model = me.model,
+            state = model.pitmark;
+        state == '0' ? me.model.gather_game_pic = me.gatherGameState.start :
+            me.isFull() ? me.model.gather_game_pic = me.gatherGameState.end :
+                me.model.gather_game_pic = me.gatherGameState.running;
+    },
+    onGatherClick: function(e){
         var me = this,
             model = me.model;
         if(!!this.gather_click && this.gather_click == 'lock'){
             return ;
         }
-        this.gather_click = 'lock';
+        var $bnt = $(e.target);
+        if($bnt.hasClass('disable')){
+            return ;
+        }
+        me.gather_click = 'lock';
+        $bnt.toggleClass('disable');//置灰
         //可领取 or 开始挖矿
-        if(model.pitmark == "0" || model.pitmark == "2"){
+        if(model.pitmark == 0 || model.pitmark == 2){
+            me.stopCounter();
             var cb = function(res){
-                this.gather_click = 'unlock';
-                if(res.retcode == "1" && model.pitmark != "0"){
+                if(res.retcode == "1" && model.pitmark != 0){
                     var dialog = new Dialog({
                         el: '.coin-dialog-box',
                         model:{
@@ -71,8 +81,27 @@ var Gather = View.extends({
                 this.model.total_gather_coin = 0;
                 //更新赚流量界面
                 event.trigger(globalEvent.bytecoin.render);//触发赚流量更新
+                this.counter();
             };
-            request.post(request.gather.bytecoin_pit).done($.proxy(cb, this));
+           if(model.pitmark == "2"){
+               $('#gather_game_pic').attr('src', me.gatherGameState.end);
+                setTimeout(function(){
+                    request.post(request.gather.bytecoin_pit).done($.proxy(cb, me)).fail(function(){
+                        toast.show(Hint.ERROR_MSG);
+                        $bnt.toggleClass('disable');//还原
+                    }).always(function(){
+                        me.gather_click = 'unlock';
+                    });
+                },2000)
+            }else{
+                request.post(request.gather.bytecoin_pit).done($.proxy(cb, me)).fail(function(){
+                    toast.show(Hint.ERROR_MSG);
+                    $bnt.toggleClass('disable');//还原
+                }).always(function(){
+                    me.gather_click = 'unlock';
+                });
+            }
+
         }
     },
     render: function(e, data){
@@ -81,8 +110,34 @@ var Gather = View.extends({
         //console.table(me.model);
         me.model = $.extend({}, me.model, data || {});
         //console.log(me.model);
+        me.doFormat();
         me.doMath();
+        me.setGatherText();
+        me.setGatherGamePic();
         me.$el.html(me.template(me.model));
+        //!me.$gatherGame && (me.$gatherGame = me.$('#gather_game_pic'));
+    },
+    doFormat: function(){
+        var pitmark = this.model.pitmark,
+            digseconds = this.model.digseconds;
+        this.model.pitmark = pitmark === "" ? 0 : parseInt(pitmark, 10);
+        this.model.digseconds = digseconds === "" ? 0 : parseInt(digseconds, 10);
+    },
+    setGatherText: function(){
+        var me = this;
+        //1.设置采集过程容器显示内容
+        //2.设置采集硬币数显示内容gather_coin_txt
+        if(!me.model.pitmark){
+            me.model.gather_time_union_txt='\u4f60\u8fd8\u672a\u5f00\u5de5\u54e6';
+        }else{
+            if(me.model.digprogress === '100%'){
+                me.model.gather_time_union_txt = '\u91c7\u96c6\u5b8c\u6210';
+            }else{
+                me.model.gather_time_union_txt = '\u91c7\u96c6\u4e2d\u002d' + me.model.dig_format_time;
+            }
+        }
+        me.model.pit_class = me.model.pitmark != 2 ? 'disable' : '';
+
     },
     /*
       是否开始采集：
@@ -95,7 +150,7 @@ var Gather = View.extends({
         var me = this,
             model = me.model;
         //是否开始收集
-        if(model.pitmark != "0" ){
+        if(model.pitmark != 0 ){
             if(me.isFull()){
                 me.stopCounter();
             }else{
@@ -136,11 +191,12 @@ var Gather = View.extends({
             model = me.model,
             digseconds = model.digseconds;
         if(digseconds > 0){
-            var coin = me.model.total_gather_coin = Math.floor(digseconds / 60 / model.bigtime)  * model.digbytecoin;
+            var coin = me.model.total_gather_coin = Math.floor(digseconds / 60 / model.digtime)  * model.digbytecoin;
             coin > 0 && (
                     me.model.total_gather_coin = coin,
                     me.model.pitmark = 2
             );
+
         }
     },
     /*

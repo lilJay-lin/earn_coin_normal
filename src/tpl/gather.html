@@ -1,47 +1,31 @@
 <div class="panel">
-    <div class="panel">
-        <div class="panel-hd">
-            <div class="panel-hd-tit-box"><img class="icon-coin" src="public/images/icon_coin.png"/><span class="panel-hd-tit">明细</span></div>
-        </div>
-        <div class="panel-bd">
-            <div class="gather">
-                <div class="gather-bar">
-                    <div class="gather-progress">
-                    </div>
-                    <div class="gather-progress-cnt">
-                        <div class="gather-progress-status" style="width:{{digprogress}}"></div>
-                    </div>
-                    <div class="gather-time">
+    <div class="panel-hd">
+        <div class="panel-hd-tit-box"><img class="icon-coin" src="public/images/icon_coin.png"/><span class="panel-hd-tit">流量矿井</span></div>
+    </div>
+    <div class="panel-bd">
+        <div class="gather">
+            <div class="gather-bar">
+                <div class="gather-progress">
+                </div>
+                <div class="gather-progress-cnt" style="overflow: hidden;">
+                    <div class="gather-progress-status" style="width:{{digprogress}}"></div>
+                </div>
+                <div class="gather-time">
                         <span class="gather-time-union">
-                            {{^pitmark}}你还未开工哦{{/pitmark}}
-                            {{#pitmark}}
-                                {{#gather_fn}}
-                                    {{#full}}
-                                        采集完成
-                                    {{/full}}
-                                    {{^full}}
-                                        采集中-{{dig_format_time}}
-                                    {{/full}}
-                                {{/gather_fn}}
-                            {{/pitmark}}
+                            {{gather_time_union_txt}}
                         </span>
-                    </div>
                 </div>
-                <div class="gather-game">
-
-                </div>
-                <p class="gather-coin">
-                    {{#pitmark}}已采集<span class="gather-coin-num">{{total_gather_coin}}</span>枚流量币{{/pitmark}}
-                    {{^pitmark}}您还未采集流量币{{/pitmark}}
-                </p>
-
-                {{^pitmark}}<a class="gather-btn ">开始采集</a>{{/pitmark}}
-                {{#pitmark}}
-                {{#pit_fn}}
-                    <a class="gather-btn {{pit_class}}">领取</a>
-                {{/pit_fn}}
-                {{/pitmark}}
             </div>
+            <div class="gather-game"  style="width:100%;height:auto">
+                <img id="gather_game_pic" src="{{gather_game_pic}}"  alt="流量矿井" style="width:100%;height:5.3rem"/>
+            </div>
+            <p class="gather-coin">
+                {{#pitmark}}已采集<span class="gather-coin-num">{{total_gather_coin}}</span>枚流量币{{/pitmark}}
+                {{^pitmark}}您还未采集流量币{{/pitmark}}
+            </p>
+
+            {{^pitmark}}<span class="gather-btn">开始采集</span>{{/pitmark}}
+            {{#pitmark}}<span class="gather-btn {{pit_class}}">领取</span>{{/pitmark}}
         </div>
     </div>
 </div>

@@ -10,8 +10,8 @@ var event = require('./event');
 var User = View.extends({
     template: _template,
     model:{
-        logo: '',
-        name: '',
+        logourl: '',
+        nickname: '',
         coinnum: 0.0
     },
     type: {

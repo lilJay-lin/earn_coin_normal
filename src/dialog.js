@@ -46,14 +46,30 @@ var Dialog = View.extends({
         console.count('dialog.render');
         me.model = $.extend({}, me.model, data || {});
         me.$cnt = $(me.template(me.model));
+        me.addClass();
         me.$el.append(me.$cnt);
     },
+    addClass: function(){
+      this.$el.css({
+          position: "absolute",
+          top: 0,
+          left: 0,
+          bottom: 0,
+          right: 0,
+          "z-index": 100
+      })
+    },
+    removeClass: function(){
+        this.$el.css({
+            "z-index": -1
+        })
+    },
     init: function(){
-        var me = this;
         this.render();
     },
     destroy: function(){
         this.undelegateEvents();
+        this.removeClass();
         this.$cnt && this.$cnt.remove();
     }
 });
